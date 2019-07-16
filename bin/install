@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set \
+  -o nounset \
+  -o pipefail \
+  -o errexit
+
+# required environment variables
+ASDF_INSTALL_TYPE=${ASDF_INSTALL_TYPE:-version}
+: ${ASDF_INSTALL_VERSION?}
+: ${ASDF_INSTALL_PATH?}
+
+# make a temporary download directory with a cleanup hook
+readonly TMP_DOWNLOAD_DIR="$(mktemp -d -t "asdf_opa_XXXXXX")"
+trap 'rm -rf "${TMP_DOWNLOAD_DIR?}"' EXIT
+
+install () {
+  local -r install_type="$1"
+  local -r version="$2"
+  local -r install_path="$3"
+
+  local -r bin_install_path="${install_path}/bin"
+  local -r download_url="$(get_download_url "${version}")"
+  local -r download_path="${TMP_DOWNLOAD_DIR}/$(get_filename "${version}")"
+
+  echo "Downloading opa version ${version} from ${download_url}"
+  if curl -fs "${download_url}" -o "${download_path}"; then
+    echo "Cleaning opa previous binaries"
+    rm -rf "${bin_install_path}/opa"
+
+    echo "Creating opa bin directory"
+    mkdir -p "${bin_install_path}"
+
+  else
+    echo "Error: opa version ${version} not found" >&2
+    exit 1
+  fi
+}
+
+get_arch () {
+  uname | tr '[:upper:]' '[:lower:]'
+}
+
+get_filename () {
+  local -r platform="$(get_arch)"
+  echo "opa_${platform}_amd64"
+}
+
+get_download_url () {
+  local -r version="v$1"
+  local -r filename="$(get_filename "${version}")"
+  echo "https://github.com/open-policy-agent/opa/releases/download/${version}/${filename}"
+}
+
+install "${ASDF_INSTALL_TYPE}" "${ASDF_INSTALL_VERSION}" "${ASDF_INSTALL_PATH}"
+
+
+#https://github.com/open-policy-agent/opa/releases/download/v0.12.0/opa_linux_amd64

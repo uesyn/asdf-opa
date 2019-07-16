@@ -1,0 +1,11 @@
+language: c
+before_script:
+  - git clone https://github.com/asdf-vm/asdf.git
+  - . asdf/asdf.sh
+script:
+  - asdf plugin-add opa $TRAVIS_BUILD_DIR
+  - asdf list-all opa
+  - asdf plugin-test opa $TRAVIS_BUILD_DIR --asdf-tool-version 0.7.0
+os:
+  - linux
+  - osx
