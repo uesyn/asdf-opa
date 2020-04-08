@@ -24,12 +24,14 @@ install () {
   local -r download_path="${TMP_DOWNLOAD_DIR}/$(get_filename "${version}")"
 
   echo "Downloading opa version ${version} from ${download_url}"
-  if curl -fs "${download_url}" -o "${download_path}"; then
+  if curl -fLs "${download_url}" -o "${download_path}"; then
     echo "Cleaning opa previous binaries"
     rm -rf "${bin_install_path}/opa"
 
     echo "Creating opa bin directory"
     mkdir -p "${bin_install_path}"
+    chmod +x "${download_path}"
+    cp ${download_path} ${bin_install_path}/opa
 
   else
     echo "Error: opa version ${version} not found" >&2
